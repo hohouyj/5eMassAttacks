@@ -15,10 +15,22 @@
         android:layout_marginTop="8dp"
         android:layout_marginEnd="32dp"
         android:text="Roll"
-        app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/textView15" />
+
+    <Button
+        android:id="@+id/clearAutoFillButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="32dp"
+        android:layout_marginEnd="32dp"
+        android:text="Clear AutoFill"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.0"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/rollButton" />
 
     <View
         android:id="@+id/divider"
@@ -172,7 +184,7 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/toHitEditTextNumber" />
 
-    <EditText
+    <AutoCompleteTextView
         android:id="@+id/damageEditText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
@@ -187,12 +199,12 @@
         app:layout_constraintStart_toEndOf="@+id/textView17"
         app:layout_constraintTop_toBottomOf="@+id/attacksEditTextNumber" />
 
-    <EditText
+    <AutoCompleteTextView
         android:id="@+id/multiAtkDmgEditText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:layout_marginEnd="32dp"
         android:ems="10"
         android:hint="Multi-Atk Dmg"
@@ -266,7 +278,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="8dp"
         android:checked="false"
         android:text="Multi Attack?"
         android:textSize="24sp"

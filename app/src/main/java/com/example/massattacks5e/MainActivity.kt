@@ -2,23 +2,71 @@ package com.example.massattacks5e
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.*
+import com.example.massattacks5e.databinding.ActivityMainBinding
 import java.util.*
 import kotlin.math.max
 import kotlin.math.min
 
 class MainActivity : AppCompatActivity() {
+
+    private var _binding: ActivityMainBinding? = null
+    private val binding get() = _binding!!
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        _binding = ActivityMainBinding.inflate(layoutInflater)
+        setContentView(binding.root)
 
+        var tinyDB : TinyDB = TinyDB(applicationContext)
+
+        fun saveDmgAutoFill(dmgLS: Array<String>){
+            var strLs = ""
+            for (item in dmgLS){
+                strLs += "$item*"
+            }
+            strLs.dropLast(1)
+            tinyDB.putString("dmgLs",strLs)
+        }
+
+        fun loadDmgAutoFill():Array<String>{
+            var strDmgLs = tinyDB.getString("dmgLs")
+            return strDmgLs?.split("*")?.toTypedArray() ?: arrayOf("oops")
+        }
+
+        var dmgAutoComplete = loadDmgAutoFill()
+
+        var dmgAutoCompleteAdapter = ArrayAdapter(this,android.R.layout.simple_list_item_1,dmgAutoComplete.distinct())
+
+        var dmgAutoCompleteTextView = findViewById<AutoCompleteTextView>(R.id.damageEditText)
+        var multiAtkDmgAutoCompleteTextView = findViewById<AutoCompleteTextView>(R.id.multiAtkDmgEditText)
+        dmgAutoCompleteTextView.threshold = 0
+        multiAtkDmgAutoCompleteTextView.threshold = 0
+        dmgAutoCompleteTextView.setAdapter(dmgAutoCompleteAdapter)
+        multiAtkDmgAutoCompleteTextView.setAdapter(dmgAutoCompleteAdapter)
 
         val rollButton = findViewById<Button>(R.id.rollButton)
+        val clearAutoFillButton = findViewById<Button>(R.id.clearAutoFillButton)
         val totalDamageView = findViewById<TextView>(R.id.totalDamageTextView)
         val numHitsView = findViewById<TextView>(R.id.numHitsTextView)
         val numCritsView = findViewById<TextView>(R.id.numCritsTextView)
         val numMissesView = findViewById<TextView>(R.id.numMissesTextView)
 
+        fun addToDmgAutoFill(arr: Array<String>, item: String): Array<String>{
+            var ls: MutableList<String> = arr.toMutableList()
+            ls.add(item)
+            return ls.toTypedArray()
+        }
+
+        clearAutoFillButton.setOnClickListener{
+            tinyDB.putString("dmgLs","")
+            dmgAutoComplete = loadDmgAutoFill()
+            dmgAutoCompleteAdapter.clear()
+            for(i in dmgAutoComplete){
+                dmgAutoCompleteAdapter.add(i)
+            }
+        }
 
         data class Attack(
             val targetAc: Int,
@@ -49,22 +97,23 @@ class MainActivity : AppCompatActivity() {
                 } else {
                     rollDice(20) + toHit
                 }
+            if (atkRoll>=attack.targetAc){
+                attack.hitBoolean = true
+            }
             if ((atkRoll-toHit)==20){
                 attack.critBoolean = true
-                //attack.hitBoolean = true
+                attack.hitBoolean = true
             }
             if ((atkRoll-toHit)==1){
                 attack.hitBoolean = false
             }
-            if (atkRoll>=attack.targetAc){
-                attack.hitBoolean = true
-            }
+
             return attack
         }
 
         fun calcDamage(attack: Attack): Attack{
             var damage = 0
-            if (attack.hitBoolean || attack.critBoolean){
+            if (attack.hitBoolean){
                 val damageLs = attack.damageList
                 for (dmgStr in damageLs) {
                     if (dmgStr.contains("d", ignoreCase = true)) {
@@ -99,6 +148,9 @@ class MainActivity : AppCompatActivity() {
             var multiAttackDmg = findViewById<EditText>(R.id.multiAtkDmgEditText).text.toString().replace(Regex("[^dD0-9+]"),"")
             var multiAttackDmgList = multiAttackDmg.split("+")
 
+            dmgAutoComplete = addToDmgAutoFill(dmgAutoComplete,damagePerAttack)
+            dmgAutoComplete = addToDmgAutoFill(dmgAutoComplete,multiAttackDmg)
+            saveDmgAutoFill(dmgAutoComplete.distinct().toTypedArray())
 
             repeat(numAttacks){
                 var attack = Attack(ac, toHit, damageList, false, false, advantageBool, disadvBool, 0)
@@ -121,6 +173,12 @@ class MainActivity : AppCompatActivity() {
             numMissesView.text = if(isMultiAttack) (numAttacks*2-numHits).toString() else (numAttacks-numHits).toString()
             totalDamageView.text = totalDamage.toString()
 
+            dmgAutoComplete = loadDmgAutoFill()
+            dmgAutoCompleteAdapter.clear()
+            for(i in dmgAutoComplete){
+                dmgAutoCompleteAdapter.add(i)
+            }
+            Log.d("LMAO",dmgAutoComplete.contentToString())
         }
     }
 }

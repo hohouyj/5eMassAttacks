@@ -17,6 +17,8 @@ class MainActivity : AppCompatActivity() {
         val totalDamageView = findViewById<TextView>(R.id.totalDamageTextView)
         val numHitsView = findViewById<TextView>(R.id.numHitsTextView)
         val numCritsView = findViewById<TextView>(R.id.numCritsTextView)
+        val numMissesView = findViewById<TextView>(R.id.numMissesTextView)
+
 
         data class Attack(
             val targetAc: Int,
@@ -49,7 +51,7 @@ class MainActivity : AppCompatActivity() {
                 }
             if ((atkRoll-toHit)==20){
                 attack.critBoolean = true
-                attack.hitBoolean = true
+                //attack.hitBoolean = true
             }
             if ((atkRoll-toHit)==1){
                 attack.hitBoolean = false
@@ -62,7 +64,7 @@ class MainActivity : AppCompatActivity() {
 
         fun calcDamage(attack: Attack): Attack{
             var damage = 0
-            if (attack.hitBoolean){
+            if (attack.hitBoolean || attack.critBoolean){
                 val damageLs = attack.damageList
                 for (dmgStr in damageLs) {
                     if (dmgStr.contains("d", ignoreCase = true)) {
@@ -87,11 +89,16 @@ class MainActivity : AppCompatActivity() {
             val numAttacks = findViewById<EditText>(R.id.attacksEditTextNumber).text.toString().toInt()
             val advantageBool = findViewById<CheckBox>(R.id.advCheckBox).isChecked
             val disadvBool = findViewById<CheckBox>(R.id.disadvCheckBox).isChecked
-            val damagePerAttack = findViewById<EditText>(R.id.damageEditText).text.toString()
+            val damagePerAttack = findViewById<EditText>(R.id.damageEditText).text.toString().replace(Regex("[^dD0-9+]"),"")
             val damageList = damagePerAttack.split("+")
             var numHits = 0
             var numCrits = 0
             var totalDamage = 0
+
+            var isMultiAttack = findViewById<CheckBox>(R.id.multiAtkCheckBox).isChecked
+            var multiAttackDmg = findViewById<EditText>(R.id.multiAtkDmgEditText).text.toString().replace(Regex("[^dD0-9+]"),"")
+            var multiAttackDmgList = multiAttackDmg.split("+")
+
 
             repeat(numAttacks){
                 var attack = Attack(ac, toHit, damageList, false, false, advantageBool, disadvBool, 0)
@@ -100,9 +107,18 @@ class MainActivity : AppCompatActivity() {
                 numHits += if (attack.hitBoolean) 1 else 0
                 numCrits += if (attack.critBoolean) 1 else 0
                 totalDamage += attack.damageDealt
+                if(isMultiAttack){
+                    var secondAttack = Attack(ac, toHit, multiAttackDmgList, false, false, advantageBool, disadvBool, 0)
+                    secondAttack = rollAttack(secondAttack)
+                    secondAttack = calcDamage(secondAttack)
+                    numHits += if (secondAttack.hitBoolean) 1 else 0
+                    numCrits += if (secondAttack.critBoolean) 1 else 0
+                    totalDamage += secondAttack.damageDealt
+                }
             }
             numCritsView.text = numCrits.toString()
-            numHitsView.text = numHits.toString()
+            numHitsView.text = (numHits-numCrits).toString()
+            numMissesView.text = if(isMultiAttack) (numAttacks*2-numHits).toString() else (numAttacks-numHits).toString()
             totalDamageView.text = totalDamage.toString()
 
         }
